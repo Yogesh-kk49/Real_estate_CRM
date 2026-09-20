@@ -40,9 +40,10 @@ export const Sidebar: React.FC<SidebarProps> = ({ onCloseMobile }) => {
             <span className="text-sm font-extrabold text-white tracking-wider">ESTATEPULSE</span>
             <span className="text-[10px] px-1.5 py-0.2 rounded bg-brand-500/20 text-brand-400 font-semibold border border-brand-500/30">CRM</span>
           </div>
-          <p className="text-[10px] text-slate-300 tracking-wide uppercase font-semibold">Coromandel Realty OS</p>
+          <p className="text-[10px] text-slate-300 tracking-wide uppercase font-semibold">Real Estate CRM OS</p>
         </div>
       </div>
+
 
       {/* Navigation */}
       <div className="flex-1 py-6 px-3 space-y-1 overflow-y-auto">

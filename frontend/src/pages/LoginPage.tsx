@@ -113,9 +113,10 @@ export const LoginPage: React.FC = () => {
                   CRM OS
                 </span>
               </div>
-              <p className="text-[11px] text-slate-700 font-semibold">Coromandel Realty Intelligence</p>
+              <p className="text-[11px] text-slate-700 font-semibold">Real Estate Intelligence OS</p>
             </div>
           </div>
+
 
           <div className="flex items-center gap-3">
             <div className="hidden md:flex items-center gap-2 text-xs text-slate-800 bg-slate-100 px-3.5 py-1.5 rounded-full border border-slate-300 font-semibold">
@@ -336,8 +337,9 @@ export const LoginPage: React.FC = () => {
       <footer className="border-t-2 border-estate-border bg-white py-6 text-center text-xs mt-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-center">
           <p className="text-slate-900 font-bold tracking-wide">
-            © 2026 EstatePulse • Coromandel Realty Intelligence OS. Production-Style Real Estate CRM.
+            © 2026 EstatePulse • Production-Style Real Estate CRM.
           </p>
+
         </div>
       </footer>
 
