@@ -11,7 +11,8 @@
 
 **EstatePulse** is a specialized real estate sales CRM engineered for high-velocity property developers and sales teams. It models residential luxury developments in Chennai (such as beachfront luxury villas along ECR, sky suites on Boat Club Road, panoramic oceanfront residences at Marina Skyline, and modern executive towers along the OMR IT Corridor).
 
-EstatePulse features an **architectural, high-contrast, clean visual identity** (`#F8F7F4` warm linen canvas, crisp white cards, bold slate typography, and architectural terracotta accents). It prioritizes information density, strict typography hierarchy (Plus Jakarta Sans with tabular figures for currency in Lakhs/Crores), and instant state clarity.
+EstatePulse features an **architectural, high-contrast, clean visual identity** (warm linen canvas, crisp white cards, bold slate typography, and architectural terracotta accents). It prioritizes information density, strict typography hierarchy (Plus Jakarta Sans with tabular figures for currency in Lakhs/Crores), and instant state clarity.
+
 
 ---
 
