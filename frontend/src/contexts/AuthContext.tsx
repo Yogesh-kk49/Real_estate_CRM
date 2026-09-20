@@ -10,7 +10,6 @@ interface AuthContextType {
   isAdmin: boolean;
   login: (email: string, password: string) => Promise<void>;
   logout: () => void;
-  switchPersona: (persona: 'admin' | 'sales_1' | 'sales_2') => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -84,24 +83,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
 
-  const switchPersona = async (persona: 'admin' | 'sales_1' | 'sales_2') => {
-    let email = 'admin@coromandel.in';
-    let pass = 'Admin@1234';
-    if (persona === 'sales_1') {
-      email = 'meera@coromandel.in';
-      pass = 'Sales@1234';
-    } else if (persona === 'sales_2') {
-      email = 'anand@coromandel.in';
-      pass = 'Sales@1234';
-    }
-
-    try {
-      await login(email, pass);
-    } catch (err: any) {
-      error('Persona switch failed', err.message);
-    }
-  };
-
   const isAdmin = user?.role === 'ADMIN';
 
   return (
@@ -113,7 +94,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         isAdmin,
         login,
         logout,
-        switchPersona,
       }}
     >
       {children}
