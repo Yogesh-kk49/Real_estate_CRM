@@ -334,17 +334,13 @@ export const LoginPage: React.FC = () => {
 
       {/* Footer with High-Contrast Dark Readable Text */}
       <footer className="border-t-2 border-estate-border bg-white py-6 text-center text-xs mt-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-3">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-center">
           <p className="text-slate-900 font-bold tracking-wide">
             © 2026 EstatePulse • Coromandel Realty Intelligence OS. Production-Style Real Estate CRM.
           </p>
-          <div className="flex items-center gap-4 text-xs text-slate-800 font-semibold">
-            <span>FastAPI Backend (Port 8000)</span>
-            <span>•</span>
-            <span>React & Vite Frontend (Port 5173)</span>
-          </div>
         </div>
       </footer>
+
 
       {/* Sign In Modal */}
       <Modal
