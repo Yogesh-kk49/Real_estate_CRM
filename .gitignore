@@ -1,0 +1,101 @@
+# ==========================================
+# EstatePulse Real Estate CRM - .gitignore
+# ==========================================
+
+# ------------------------------------------
+# Python & Backend
+# ------------------------------------------
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Virtual Environments
+venv/
+.venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+
+# SQLite Database & Storage
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
+backend/estatepulse.db
+backend/*.db
+backend/*.db-wal
+backend/*.db-shm
+
+# Backend Environment & Secrets
+backend/.env
+.env
+.env.local
+.env.*.local
+!.env.example
+!backend/.env.example
+
+# Pytest, Testing & Coverage
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+coverage.xml
+*.cover
+
+# ------------------------------------------
+# Node & Frontend (React / Vite / Tailwind)
+# ------------------------------------------
+node_modules/
+frontend/node_modules/
+
+# Production Build Artifacts
+dist/
+frontend/dist/
+build/
+out/
+
+# Vite Cache
+.vite/
+frontend/.vite/
+
+# Logs & Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+*.log
+
+# Editor / TypeScript Build Cache
+*.tsbuildinfo
+.eslintcache
+
+# ------------------------------------------
+# IDEs & System Files
+# ------------------------------------------
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# OS Metadata
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+[Dd]esktop.ini
+
+# Scratch & Temporary
+scratch/
+tmp/
+temp/

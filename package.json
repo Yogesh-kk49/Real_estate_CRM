@@ -1,0 +1,13 @@
+{
+  "name": "estatepulse-crm-workspace",
+  "version": "1.0.0",
+  "private": true,
+  "description": "EstatePulse - Full-Stack Real Estate CRM",
+  "scripts": {
+    "seed": "cd backend && python seed.py",
+    "test": "cd backend && python tests/test_concurrency.py && python tests/test_auth_rbac.py && python tests/test_validation.py",
+    "dev:backend": "cd backend && python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "cd frontend && npm run build"
+  }
+}
