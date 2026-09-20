@@ -1,4 +1,4 @@
-# EstatePulse — High-Velocity Real Estate CRM & Operations OS
+# EstatePulse - High-Velocity Real Estate CRM & Operations OS
 
 > **Full-Stack Developer Technical Interview Project**  
 > An enterprise-grade, production-style Real Estate CRM built specifically for luxury developer sales operations, real-time inventory allocation, and concurrency-guarded property unit bookings.
@@ -370,4 +370,4 @@ python tests/test_validation.py
 
 ## 12. License
 
-Developed for evaluation and demonstration purposes. All rights reserved © 2026 Coromandel Realty Intelligence OS / EstatePulse.
+Developed for evaluation and demonstration purposes. All rights reserved © 2026 EstatePulse.
