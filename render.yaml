@@ -25,12 +25,10 @@ services:
       - key: CORS_ORIGINS
         value: "*"
 
-  # 2. React 18 + Vite Frontend (Render Static Site - 100% Free Forever)
-  - type: web
+  # 2. React 18 + Vite Frontend (Render Static Site - Free)
+  - type: static
     name: estatepulse-frontend
-    runtime: static
     rootDir: frontend
-    plan: free
     buildCommand: npm install && npm run build
     staticPublishPath: dist
     routes:
