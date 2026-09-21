@@ -63,7 +63,7 @@ def create_booking_with_concurrency_lock(
         )
 
     # 3. ATOMIC CONDITIONAL UPDATE
-    # In SQLite & SQL, an atomic UPDATE statement locks the row and updates it only if
+    # In PostgreSQL & SQL, an atomic UPDATE statement locks the row and updates it only if
     # availability is still 'Available'. If another concurrent thread updated it a millisecond
     # earlier, rowcount will be 0.
     now = datetime.utcnow()

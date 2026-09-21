@@ -16,9 +16,10 @@ from app.models.property import Building, Project, Unit, UnitAvailability, UnitT
 from app.models.user import User, UserRole
 
 
-def seed_database():
+def seed_database(drop_tables: bool = True):
     print("🌱 Initializing database schema...")
-    Base.metadata.drop_all(bind=engine)
+    if drop_tables:
+        Base.metadata.drop_all(bind=engine)
     Base.metadata.create_all(bind=engine)
 
     db = SessionLocal()

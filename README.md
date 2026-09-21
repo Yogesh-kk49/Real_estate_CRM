@@ -13,7 +13,6 @@
 
 EstatePulse features an **architectural, high-contrast, clean visual identity** (warm linen canvas, crisp white cards, bold slate typography, and architectural terracotta accents). It prioritizes information density, strict typography hierarchy (Plus Jakarta Sans with tabular figures for currency in Lakhs/Crores), and instant state clarity.
 
-
 ---
 
 ## 2. Core Features & Business Highlights
@@ -44,10 +43,10 @@ EstatePulse features an **architectural, high-contrast, clean visual identity** 
 - **Urgency Classification**: Automated badges highlighting `Due Today`, `Overdue`, and upcoming consultations.
 - **Past-Date Validation**: Ensures scheduled follow-up touchpoints cannot be placed in the past.
 
-### 🔐 Role-Based Access Control (RBAC) & Persona Testing
+### 🔐 Role-Based Access Control (RBAC) & Secure Authentication
 - **Executive Admin**: Full organization-wide oversight, staff recruitment, property configuration, and cross-portfolio analytics.
 - **Sales Consultant**: Scoped visibility limited strictly to assigned leads and self-booked units.
-- **Topbar Persona Switcher**: Allows interviewers and reviewers to toggle between Admin and Consultant accounts with 1 click to verify RBAC isolation in real time.
+- **Dedicated User Profile Pill**: Indicates the current active account, first name, and role badge (Admin in Amber, Sales in Emerald).
 - **Secure Sign Out Flow**: Confirmation dialog before ending sessions and automatic clearance of JWT authentication tokens.
 
 ---
@@ -60,7 +59,7 @@ EstatePulse features an **architectural, high-contrast, clean visual identity** 
 | **Sales Consultant** | `meera@coromandel.in` | `Sales@1234` | Scoped consultant workspace, manage assigned leads, execute bookings |
 | **Sales Consultant** | `anand@coromandel.in` | `Sales@1234` | Scoped consultant workspace, manage assigned leads, execute bookings |
 
-> 💡 **Quick Sign-In**: The Login screen features an on-demand modal with handy `[Load Admin]` and `[Load Staff]` buttons for instant evaluation without typing.
+> 💡 **Quick Sign-In**: The Login screen features an on-demand modal with convenient `[Load Admin]` and `[Load Staff]` helper buttons for instant evaluation without manual typing.
 
 ---
 
@@ -69,7 +68,7 @@ EstatePulse features an **architectural, high-contrast, clean visual identity** 
 | Layer | Technologies | Rationale |
 |---|---|---|
 | **Backend** | Python 3.12, FastAPI, SQLAlchemy 2.0, Pydantic v2, Uvicorn | High performance, auto-generated OpenAPI/Swagger documentation at `/api/docs`, strict validation guards. |
-| **Database** | SQLite (WAL Mode + Foreign Keys + Row Locks) | Zero-friction setup for evaluation, ACID transaction guarantees, immediate write-ahead logging. |
+| **Database** | PostgreSQL (Render Cloud / Neon) | Cloud-persistent PostgreSQL for zero-cost production hosting; ACID transactions, connection pooling, and atomic row-level locks. |
 | **Auth & Security** | PyJWT (HS256), Passlib, Bcrypt | Stateless JWT bearer tokens, role verification dependencies, salted password hashing. |
 | **Frontend** | React 18, Vite, TypeScript, Tailwind CSS, Lucide React | Modern SPA architecture, lightning-fast HMR, high-contrast accessible design system. |
 | **Testing** | Python `unittest` + `httpx.ASGITransport` + `asyncio` | Automated concurrency stress tests, RBAC access tests, and validation constraint tests. |
@@ -82,7 +81,7 @@ EstatePulse features an **architectural, high-contrast, clean visual identity** 
 flowchart TD
     subgraph Client ["Frontend (React 18 + Vite + Tailwind)"]
         UI[UI Views: Dashboard, Leads, Properties, Bookings, Team]
-        AuthCtx[AuthContext & Instant Persona Switcher]
+        AuthCtx[AuthContext & JWT Session]
         APIClient[Axios Client with Bearer Interceptors]
     end
 
@@ -93,7 +92,7 @@ flowchart TD
         LService[Lead Service: Scoping & Lifecycle Validation]
     end
 
-    subgraph DB ["Database (SQLite in WAL Mode)"]
+    subgraph DB ["Database (PostgreSQL 16 Engine)"]
         UnitsTbl[(Units Table: Atomic Conditional Update)]
         BookingsTbl[(Bookings Table: UNIQUE unit_id constraint)]
         LeadsTbl[(Leads & LeadNotes Tables)]
@@ -235,7 +234,101 @@ if result.rowcount == 0:
 
 ---
 
-## 8. Installation & Quick Start
+## 8. Free Cloud Hosting Guide (100% on Render: PostgreSQL + Backend + Frontend)
+
+You can host the entire system permanently on **Render** with zero credit card required:
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                             RENDER CLOUD                                │
+│                                                                         │
+│   ┌────────────────────────┐         ┌──────────────────────────────┐   │
+│   │    Render Frontend     │         │        Render Backend        │   │
+│   │  React 18 + Vite SPA   │────────▶│      FastAPI Web Service     │   │
+│   │   (Static Site - Free) │         │     (Python 3.12 - Free)     │   │
+│   └────────────────────────┘         └──────────────┬───────────────┘   │
+│                                                     │                   │
+│                                                     ▼                   │
+│                                      ┌──────────────────────────────┐   │
+│                                      │      Render PostgreSQL       │   │
+│                                      │     Managed Cloud DB (Free)  │   │
+│                                      └──────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────┘
+```
+
+### Option A: 1-Click Render Blueprint (Recommended)
+
+The repository includes a pre-configured [`render.yaml`](file:///render.yaml) Blueprint that sets up PostgreSQL, the FastAPI Backend, and the React Frontend simultaneously:
+
+1. Push your changes to GitHub: `https://github.com/Yogesh-kk49/Real_estate_CRM`.
+2. Go to [https://dashboard.render.com](https://dashboard.render.com) and sign in.
+3. Click **New +** → **Blueprint**.
+4. Select your GitHub repository: `Real_estate_CRM`.
+5. Render will automatically read `render.yaml` and provision:
+   - **`estatepulse-db`**: Free PostgreSQL database.
+   - **`estatepulse-backend`**: Free Python FastAPI web service connected directly to the database.
+   - **`estatepulse-frontend`**: Free React static site connected directly to the backend.
+6. Click **Apply**.
+7. *That's it!* On initial launch, the backend automatically detects the fresh PostgreSQL database and seeds the demo **Administrator** (`admin@coromandel.in` / `Admin@1234`) and **Sales Staff** (`meera@coromandel.in` / `Sales@1234`) accounts automatically.
+
+---
+
+### Option B: Manual Setup on Render (Step-by-Step)
+
+If you prefer to configure each component manually in the Render Dashboard:
+
+#### Step 1: Create Free PostgreSQL Database on Render
+1. In Render Dashboard, click **New +** → **PostgreSQL**.
+2. **Name**: `estatepulse-db`
+3. **Database**: `estatepulse`
+4. **User**: `estatepulse_user`
+5. **Plan**: `Free`
+6. Click **Create Database**.
+7. Once created, copy the **Internal Database URL** (or External Database URL).
+
+#### Step 2: Deploy Backend Web Service
+1. Click **New +** → **Web Service**.
+2. Select your repository `Real_estate_CRM`.
+3. Settings:
+   - **Name**: `estatepulse-backend`
+   - **Root Directory**: `backend`
+   - **Runtime**: `Python 3`
+   - **Build Command**: `pip install -r requirements.txt`
+   - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
+   - **Instance Type**: `Free`
+4. **Environment Variables**:
+   - `DATABASE_URL`: *(Paste your Render PostgreSQL connection string)*
+   - `SECRET_KEY`: `estatepulse-interview-dev-super-secret-key-change-in-prod`
+   - `ENVIRONMENT`: `production`
+   - `CORS_ORIGINS`: `*`
+5. Click **Deploy Web Service**.
+6. Copy your public backend URL (e.g. `https://estatepulse-backend.onrender.com`).
+
+#### Step 3: Deploy Frontend Static Site
+1. Click **New +** → **Static Site**.
+2. Select your repository `Real_estate_CRM`.
+3. Settings:
+   - **Name**: `estatepulse-frontend`
+   - **Root Directory**: `frontend`
+   - **Build Command**: `npm install && npm run build`
+   - **Publish Directory**: `dist`
+4. **Environment Variables**:
+   - `VITE_API_URL`: `https://estatepulse-backend.onrender.com/api` *(replace with your Render backend URL + `/api`)*
+5. **Routes / Redirects**:
+   - Add a rewrite rule: Source `/*` → Destination `/index.html` (Status: `Rewrite`).
+6. Click **Create Static Site**.
+
+---
+
+### Verification:
+1. Open your `estatepulse-frontend.onrender.com` URL.
+2. The landing page loads with the full luxury design.
+3. Click **Sign In** and use **Load Admin** (`admin@coromandel.in`) or **Load Staff** (`meera@coromandel.in`).
+4. You are securely signed in and connected to your persistent cloud PostgreSQL database!
+
+---
+
+## 9. Local Installation & Quick Start
 
 ### Prerequisites
 - **Node.js** v18+ (tested on Node v20/v22)
@@ -307,7 +400,7 @@ run_dev.bat
 
 ---
 
-## 9. Running Automated Test Suite
+## 10. Running Automated Test Suite
 
 Run the full automated test suite directly from the `backend` directory:
 
@@ -326,7 +419,7 @@ python tests/test_validation.py
 
 ---
 
-## 10. API Endpoints Reference
+## 11. API Endpoints Reference
 
 | Category | Method | Endpoint | Access | Description |
 |---|---|---|---|---|
@@ -350,7 +443,7 @@ python tests/test_validation.py
 
 ---
 
-## 11. Key Engineering & Product Decisions
+## 12. Key Engineering & Product Decisions
 
 1. **Database-Level Atomic Conditional Updates Over In-Memory Locks**:
    - In-memory locks fail when scaling across multiple worker processes or containers. By performing conditional `UPDATE` statements inside database transactions and checking affected row counts, we guarantee zero double-booking with zero distributed locking overhead.
@@ -361,14 +454,14 @@ python tests/test_validation.py
 3. **Strict Staff-Only Recruitment**:
    - Administrators can onboard and recruit sales consultants (`SALES_EMPLOYEE`), but the recruitment interface and API schema strictly prohibit creating additional administrators, safeguarding organizational privilege hierarchy.
 
-4. **Reviewer-First UX & Persona Switcher**:
-   - Evaluating RBAC normally requires logging in and out repeatedly. EstatePulse provides a 1-click persona switcher in the Topbar, enabling reviewers to toggle roles in seconds to witness lead isolation in real time.
+4. **Production-Ready PostgreSQL with Connection Pooling**:
+   - Configured with SQLAlchemy connection recycling and pre-pinging, enabling zero-config deployment to serverless and hosted PostgreSQL clusters like Neon or AWS RDS while retaining local fallback capability.
 
 5. **Contextual Error Handling**:
    - Both Pydantic schema validation errors and backend exceptions are normalized into actionable, user-friendly sentences instead of raw stack traces or ambiguous errors.
 
 ---
 
-## 12. License
+## 13. License
 
 Developed for evaluation and demonstration purposes. All rights reserved © 2026 EstatePulse.
