@@ -3,6 +3,9 @@
 > **Full-Stack Developer Technical Interview Project**  
 > An enterprise-grade, production-style Real Estate CRM built specifically for luxury developer sales operations, real-time inventory allocation, and concurrency-guarded property unit bookings.
 >
+> 🌐 **Live Web Application**: [https://real-estate-crm-5k5j.onrender.com](https://real-estate-crm-5k5j.onrender.com)  
+> ⚡ **Live Backend API**: [https://estatepulse-backend-56wz.onrender.com](https://estatepulse-backend-56wz.onrender.com)  
+> 📖 **Interactive Swagger API Docs**: [https://estatepulse-backend-56wz.onrender.com/api/docs](https://estatepulse-backend-56wz.onrender.com/api/docs)  
 > 🔗 **GitHub Repository**: [https://github.com/Yogesh-kk49/Real_estate_CRM](https://github.com/Yogesh-kk49/Real_estate_CRM)
 
 ---
