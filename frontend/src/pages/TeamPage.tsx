@@ -261,7 +261,7 @@ export const TeamPage: React.FC = () => {
       {/* Search + Table */}
       <div className="bg-white rounded-2xl border border-estate-border shadow-xs overflow-hidden">
         <div className="p-4 border-b border-estate-border flex items-center gap-3">
-          <div className="relative flex-1 max-w-xs">
+          <div className="relative flex-1 min-w-0">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
             <input
               value={search}
@@ -275,7 +275,7 @@ export const TeamPage: React.FC = () => {
               </button>
             )}
           </div>
-          <span className="text-xs text-slate-500 font-medium">{filtered.length} members</span>
+          <span className="flex-shrink-0 text-xs text-slate-500 font-medium">{filtered.length} members</span>
         </div>
 
         {isLoading ? (

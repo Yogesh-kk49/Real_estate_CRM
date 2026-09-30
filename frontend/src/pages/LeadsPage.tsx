@@ -129,20 +129,24 @@ export const LeadsPage: React.FC = () => {
       <div className="bg-white p-4 rounded-xl border border-estate-border shadow-2xs space-y-3">
         <div className="flex flex-col md:flex-row gap-3">
           {/* Search Input */}
-          <form onSubmit={handleSearchSubmit} className="flex-1 flex gap-2">
-            <div className="relative flex-1">
+          <form onSubmit={handleSearchSubmit} className="flex-1 flex gap-2 min-w-0">
+            <div className="relative flex-1 min-w-0">
               <Search className="w-4 h-4 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
-                placeholder="Search lead by name, email, or phone number..."
+                placeholder="Search by name, email or phone..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full pl-9 pr-4 py-2 text-xs border border-slate-300 rounded-md focus:outline-none focus:border-brand-500 focus:ring-1 focus:ring-brand-500"
               />
             </div>
-            <Button type="submit" variant="secondary" size="md">
-              Search
-            </Button>
+            <button
+              type="submit"
+              className="flex-shrink-0 inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold bg-slate-800 text-white rounded-md hover:bg-slate-700 transition-colors"
+            >
+              <Search className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Search</span>
+            </button>
           </form>
 
           {/* Quick Filters */}

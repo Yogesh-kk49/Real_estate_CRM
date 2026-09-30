@@ -121,11 +121,11 @@ export const BookingsPage: React.FC = () => {
 
       {/* Search Filter */}
       <div className="bg-white p-4 rounded-xl border border-estate-border shadow-2xs">
-        <div className="relative max-w-md">
+        <div className="relative w-full max-w-md min-w-0">
           <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search booking by customer, unit, project, status, or reference..."
+            placeholder="Search by customer, unit, project or reference..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2 text-xs border border-slate-300 rounded-md focus:outline-none focus:border-brand-500 text-slate-900 font-medium"
