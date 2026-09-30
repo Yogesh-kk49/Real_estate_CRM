@@ -15,8 +15,21 @@ export const propertiesApi = {
     return res.data;
   },
 
-  createProject: async (data: { name: string; location: string; description?: string; status?: string }): Promise<Project> => {
+  createProject: async (data: {
+    name: string;
+    location: string;
+    description?: string;
+    status?: string;
+    completion_year?: number;
+  }): Promise<Project> => {
     const res = await apiClient.post<Project>('/properties/projects', data);
+    return res.data;
+  },
+
+  getBuildings: async (projectId?: number): Promise<Building[]> => {
+    const res = await apiClient.get<Building[]>('/properties/buildings', {
+      params: projectId ? { project_id: projectId } : undefined,
+    });
     return res.data;
   },
 
@@ -32,6 +45,21 @@ export const propertiesApi = {
 
   getUnitById: async (id: number): Promise<Unit> => {
     const res = await apiClient.get<Unit>(`/properties/units/${id}`);
+    return res.data;
+  },
+
+  createUnit: async (data: {
+    building_id: number;
+    unit_number: string;
+    unit_type: string;
+    floor: number;
+    super_builtup_sqft: number;
+    carpet_sqft?: number;
+    facing?: string;
+    price: number;
+    availability?: string;
+  }): Promise<Unit> => {
+    const res = await apiClient.post<Unit>('/properties/units', data);
     return res.data;
   },
 

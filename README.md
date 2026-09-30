@@ -1,470 +1,223 @@
-# EstatePulse - High-Velocity Real Estate CRM & Operations OS
+# EstatePulse — Real Estate CRM
 
-> **Full-Stack Developer Technical Interview Project**  
-> An enterprise-grade, production-style Real Estate CRM built specifically for luxury developer sales operations, real-time inventory allocation, and concurrency-guarded property unit bookings.
+> **Full-Stack Developer Technical Interview Project**
+> A production-style Real Estate CRM built for luxury developer sales teams: lead pipeline management, role-based access control, property inventory management (admin UI included), concurrency-guarded unit bookings with cancellation, and a full audit trail.
 >
-> 🌐 **Live Web Application**: [https://real-estate-crm-5k5j.onrender.com](https://real-estate-crm-5k5j.onrender.com)  
-> ⚡ **Live Backend API**: [https://estatepulse-backend-56wz.onrender.com](https://estatepulse-backend-56wz.onrender.com)  
-> 📖 **Interactive Swagger API Docs**: [https://estatepulse-backend-56wz.onrender.com/api/docs](https://estatepulse-backend-56wz.onrender.com/api/docs)  
-> 🔗 **GitHub Repository**: [https://github.com/Yogesh-kk49/Real_estate_CRM](https://github.com/Yogesh-kk49/Real_estate_CRM)
+> 🌐 **Live Frontend**: [https://real-estate-crm-5k5j.onrender.com](https://real-estate-crm-5k5j.onrender.com)
+> ⚡ **Live Backend API**: [https://estatepulse-backend-56wz.onrender.com](https://estatepulse-backend-56wz.onrender.com)
+> 📖 **Swagger Docs**: [https://estatepulse-backend-56wz.onrender.com/api/docs](https://estatepulse-backend-56wz.onrender.com/api/docs)
+> 🔗 **GitHub**: [https://github.com/Yogesh-kk49/Real_estate_CRM](https://github.com/Yogesh-kk49/Real_estate_CRM)
 
 ---
 
 ## 1. Project Overview
 
-**EstatePulse** is a specialized real estate sales CRM engineered for high-velocity property developers and sales teams. It models residential luxury developments in Chennai (such as beachfront luxury villas along ECR, sky suites on Boat Club Road, panoramic oceanfront residences at Marina Skyline, and modern executive towers along the OMR IT Corridor).
+EstatePulse is a specialised real estate sales CRM designed for Chennai luxury developers. It models a `Project → Building → Unit` inventory hierarchy and manages a 7-stage lead lifecycle (`New → Contacted → Site Visit → Interested → Negotiation → Booked / Lost`).
 
-EstatePulse features an **architectural, high-contrast, clean visual identity** (warm linen canvas, crisp white cards, bold slate typography, and architectural terracotta accents). It prioritizes information density, strict typography hierarchy (Plus Jakarta Sans with tabular figures for currency in Lakhs/Crores), and instant state clarity.
-
----
-
-## 2. Core Features & Business Highlights
-
-### 📋 Lead Pipeline & Lifecycle Progression
-- **7-Stage Pipeline**: Systematic progression: `New` → `Contacted` → `Site Visit` → `Interested` → `Negotiation` → `Booked` / `Lost`.
-- **Interactive Lifecycle Stepper**: 1-click stage advancement directly from the customer's 360° profile view.
-- **Budget & Preference Tracking**: Budgets formatted cleanly in Indian denomination (₹ Lakhs and Crores).
-- **Search & Multi-Filter**: Real-time filtering by lead stage, property interest, priority, and assigned sales consultant.
-
-### 🛡️ Concurrency-Guarded Booking Engine (Zero Double-Booking)
-- **Atomic Database Locks**: Connects buyer leads to property units with agreed value, token deposit, payment reference, and contract notes.
-- **Zero Double-Booking Guarantee**: Backend conditional row updates (`WHERE id = :id AND availability = 'Available'`) and unique constraints prevent two consultants from booking the same unit, returning clean **HTTP 409 Conflict** errors with user-friendly resolution prompts.
-
-### 👥 Staff Recruitment & Delegation (Admin-Only)
-- **Recruit Sales Staff**: Administrators can onboard new sales consultants by providing their full name, work email (or Gmail), mobile number, and initial password.
-- **Staff-Only Role Protection**: The recruitment workflow is strictly locked to create **Sales Consultants (`SALES_EMPLOYEE`)** only, preventing unauthorized admin escalation.
-- **Lead Delegation & Reassignment**: Admins can distribute unassigned or existing buyer leads to newly recruited consultants.
-- **Access Control**: Instant account deactivation and reactivation controls.
-
-### 🏢 Relational Property Hierarchy & Live Matrix
-- **Relational Schema**: `Project` → `Building` → `Unit`.
-- **Inventory Matrix**: Tracks floors, super built-up area (sq.ft), carpet area, facing direction, and configuration (`1BHK`, `2BHK`, `3BHK`, `4BHK`, `Penthouse`, `Villa`).
-- **Real-Time Unit States**: Color-coded badges for `Available`, `Reserved`, and `Booked`.
-
-### ⏱️ 360° Interaction Audit Trail & Follow-up Intelligence
-- **Interaction Logs**: Chronological timeline covering `Phone Call`, `Meeting`, `WhatsApp Message`, `Site Visit`, `General Note`, `Stage Change`, and `Unit Booking`.
-- **Urgency Classification**: Automated badges highlighting `Due Today`, `Overdue`, and upcoming consultations.
-- **Past-Date Validation**: Ensures scheduled follow-up touchpoints cannot be placed in the past.
-
-### 🔐 Role-Based Access Control (RBAC) & Secure Authentication
-- **Executive Admin**: Full organization-wide oversight, staff recruitment, property configuration, and cross-portfolio analytics.
-- **Sales Consultant**: Scoped visibility limited strictly to assigned leads and self-booked units.
-- **Dedicated User Profile Pill**: Indicates the current active account, first name, and role badge (Admin in Amber, Sales in Emerald).
-- **Secure Sign Out Flow**: Confirmation dialog before ending sessions and automatic clearance of JWT authentication tokens.
+Key design goals:
+- **No double-booking** — atomic conditional `UPDATE` + partial unique index
+- **No invalid state transitions** — `Booked` stage requires a confirmed booking; stage/priority/unit-type values are enum-validated at the schema layer
+- **Admin UI for properties** — admins can create Projects, Buildings, and Units from the Properties page
+- **Booking cancellation** — cancel frees the unit (`Available`) and unblocks re-booking via partial unique index (filters on `status = 'Confirmed'`)
 
 ---
 
-## 3. Demo Access Credentials
+## 2. Demo Credentials
 
-| Role | Email | Password | Scope & Privileges |
-|---|---|---|---|
-| **Administrator** | `admin@coromandel.in` | `Admin@1234` | Full system control, recruit sales consultants, manage all leads & inventory |
-| **Sales Consultant** | `meera@coromandel.in` | `Sales@1234` | Scoped consultant workspace, manage assigned leads, execute bookings |
-| **Sales Consultant** | `anand@coromandel.in` | `Sales@1234` | Scoped consultant workspace, manage assigned leads, execute bookings |
-
-> 💡 **Quick Sign-In**: The Login screen features an on-demand modal with convenient `[Load Admin]` and `[Load Staff]` helper buttons for instant evaluation without manual typing.
-
----
-
-## 4. Tech Stack
-
-| Layer | Technologies | Rationale |
+| Role | Email | Password |
 |---|---|---|
-| **Backend** | Python 3.12, FastAPI, SQLAlchemy 2.0, Pydantic v2, Uvicorn | High performance, auto-generated OpenAPI/Swagger documentation at `/api/docs`, strict validation guards. |
-| **Database** | PostgreSQL (Render Cloud / Neon) | Cloud-persistent PostgreSQL for zero-cost production hosting; ACID transactions, connection pooling, and atomic row-level locks. |
-| **Auth & Security** | PyJWT (HS256), Passlib, Bcrypt | Stateless JWT bearer tokens, role verification dependencies, salted password hashing. |
-| **Frontend** | React 18, Vite, TypeScript, Tailwind CSS, Lucide React | Modern SPA architecture, lightning-fast HMR, high-contrast accessible design system. |
-| **Testing** | Python `unittest` + `httpx.ASGITransport` + `asyncio` | Automated concurrency stress tests, RBAC access tests, and validation constraint tests. |
+| **Administrator** | `admin@coromandel.in` | `Admin@1234` |
+| **Sales Consultant** | `meera@coromandel.in` | `Sales@1234` |
+| **Sales Consultant** | `anand@coromandel.in` | `Sales@1234` |
+
+The login page has `[Load Admin]` / `[Load Staff]` helper buttons that auto-fill credentials.
 
 ---
 
-## 5. System Architecture
+## 3. Tech Stack
 
-```mermaid
-flowchart TD
-    subgraph Client ["Frontend (React 18 + Vite + Tailwind)"]
-        UI[UI Views: Dashboard, Leads, Properties, Bookings, Team]
-        AuthCtx[AuthContext & JWT Session]
-        APIClient[Axios Client with Bearer Interceptors]
-    end
+| Layer | Technology | Why |
+|---|---|---|
+| **Backend** | Python 3.12, FastAPI, SQLAlchemy 2.0, Pydantic v2 | Auto-generated OpenAPI docs, strict Pydantic validators, async-ready |
+| **Database** | PostgreSQL (Render) / SQLite (local/test) | ACID transactions; partial unique indexes for conditional booking uniqueness |
+| **Auth** | PyJWT (HS256), Passlib/Bcrypt | Stateless JWT; SECRET_KEY must be set via env var in production |
+| **Frontend** | React 18, Vite, TypeScript, Tailwind CSS | Type-safe SPA; responsive mobile-first layout |
+| **Tests** | pytest + FastAPI TestClient | 17 automated tests covering validation, enums, duplicates, state guards, cancellation |
 
-    subgraph Server ["Backend (FastAPI + Python 3.12)"]
-        Router[API Routers: /auth, /leads, /properties, /bookings, /users, /dashboard]
-        Dep[Dependencies: JWT Auth & RBAC Guards]
-        BService[Booking Service: Atomic Concurrency Lock]
-        LService[Lead Service: Scoping & Lifecycle Validation]
-    end
+---
 
-    subgraph DB ["Database (PostgreSQL 16 Engine)"]
-        UnitsTbl[(Units Table: Atomic Conditional Update)]
-        BookingsTbl[(Bookings Table: UNIQUE unit_id constraint)]
-        LeadsTbl[(Leads & LeadNotes Tables)]
-        UsersTbl[(Users Table: Salted Hashes & Roles)]
-    end
+## 4. System Architecture
 
-    UI --> AuthCtx
-    UI --> APIClient
-    APIClient -->|Bearer JWT| Router
-    Router --> Dep
-    Router --> BService
-    Router --> LService
-    BService -->|Atomic UPDATE + Rowcount Check| UnitsTbl
-    BService --> BookingsTbl
-    LService --> LeadsTbl
 ```
-
----
-
-## 6. Database Schema & Entity Relationships
-
-```mermaid
-erDiagram
-    USERS ||--o{ LEADS : "assigned_to"
-    USERS ||--o{ BOOKINGS : "booked_by"
-    USERS ||--o{ LEAD_NOTES : "authored_by"
-    PROJECTS ||--o{ BUILDINGS : "contains"
-    BUILDINGS ||--o{ UNITS : "contains"
-    LEADS ||--o{ LEAD_NOTES : "has_timeline"
-    LEADS ||--o| BOOKINGS : "results_in"
-    UNITS ||--o| BOOKINGS : "allocated_to"
-
-    USERS {
-        int id PK
-        string email UK
-        string hashed_password
-        string full_name
-        string role "ADMIN | SALES_EMPLOYEE"
-        string phone
-        boolean is_active
-        datetime created_at
-    }
-
-    PROJECTS {
-        int id PK
-        string name
-        string location
-        string status
-        int completion_year
-    }
-
-    BUILDINGS {
-        int id PK
-        int project_id FK
-        string name
-        int total_floors
-    }
-
-    UNITS {
-        int id PK
-        int building_id FK
-        string unit_number
-        string unit_type "1BHK|2BHK|3BHK|4BHK|Penthouse|Villa"
-        int floor
-        float super_builtup_sqft
-        float price "INR Denominated"
-        string availability "Available | Reserved | Booked"
-    }
-
-    LEADS {
-        int id PK
-        string name
-        string email
-        string phone
-        string stage "New|Contacted|Site Visit|Interested|Negotiation|Booked|Lost"
-        string priority "Low|Medium|High|Urgent"
-        float budget_min
-        float budget_max
-        int interested_project_id FK
-        int assigned_user_id FK
-        date next_followup_date
-    }
-
-    LEAD_NOTES {
-        int id PK
-        int lead_id FK
-        int author_id FK
-        string note_type "Call|Meeting|WhatsApp|Site Visit|Stage Change|Booking|General"
-        text content
-        datetime created_at
-    }
-
-    BOOKINGS {
-        int id PK
-        int lead_id FK
-        int unit_id FK, UK
-        int booked_by_user_id FK
-        float agreement_value
-        float booking_amount
-        string status "Confirmed"
-        string payment_reference
-        datetime booking_date
-    }
+Frontend (React 18 + Vite)
+  │  Bearer JWT
+  ▼
+Backend (FastAPI)
+  ├── /api/auth          – login, token
+  ├── /api/leads         – CRUD, assign, notes  (GET/POST + PUT/PATCH on leads/{id})
+  ├── /api/bookings      – create, list, cancel  (POST /bookings/{id}/cancel)
+  ├── /api/properties    – projects, buildings, units  (admin POST for creation)
+  ├── /api/users         – recruit, deactivate
+  └── /api/dashboard     – KPI stats
+  │
+  ▼
+Database (PostgreSQL / SQLite)
+  ├── users, leads, lead_notes
+  ├── projects, buildings, units
+  └── bookings  ← partial unique indexes on (unit_id) and (lead_id) WHERE status='Confirmed'
 ```
 
 ---
 
-## 7. Concurrency Guard Deep-Dive (Solving the Double-Booking Problem)
-
-In luxury real estate sales, multiple agents frequently negotiate with different high-net-worth buyers simultaneously. If two agents click "Confirm Booking" on the same prime villa at the exact same millisecond:
+## 5. Database Schema
 
 ```
-Agent 1 (Meera):  POST /api/bookings (Unit #1 - Coromandel Ocean Villa)
-Agent 2 (Anand):  POST /api/bookings (Unit #1 - Coromandel Ocean Villa)
+USERS           PROJECTS
+  id              id
+  email (UK)      name, location, status
+  hashed_password
+  role            BUILDINGS
+  is_active         id, project_id FK, name, total_floors
+
+LEADS           UNITS
+  id              id, building_id FK
+  name            unit_type (1BHK|2BHK|3BHK|4BHK|Penthouse|Villa) ← enum-validated
+  email           floor, super_builtup_sqft, price
+  phone           availability (Available|Reserved|Booked) ← enum-validated
+  stage (enum)
+  priority (enum) BOOKINGS
+  budget_min        id
+  budget_max        lead_id FK
+  assigned_user_id  unit_id FK  ← uq_active_booking_unit (WHERE status='Confirmed')
+  next_followup_date lead_id UK  ← uq_active_booking_lead  (WHERE status='Confirmed')
+                    status (Confirmed|Cancelled)
+LEAD_NOTES        booking_amount, booking_date
+  id, lead_id FK
+  note_type, content, created_at
 ```
 
-### The Solution:
-Rather than relying on in-memory locks or naive client checks, EstatePulse executes an **atomic conditional UPDATE** inside a transaction:
+---
+
+## 6. Concurrency Guard (Zero Double-Booking)
+
+Two consultants clicking "Book" simultaneously on the same unit:
 
 ```python
-# backend/app/services/booking_service.py
+# booking_service.py
 result = db.execute(
     update(Unit)
-    .where(Unit.id == unit_id, Unit.availability == UnitAvailability.AVAILABLE.value)
-    .values(availability=UnitAvailability.BOOKED.value)
+    .where(Unit.id == unit_id, Unit.availability == "Available")
+    .values(availability="Booked")
 )
-
 if result.rowcount == 0:
-    db.rollback()
-    raise HTTPException(
-        status_code=status.HTTP_409_CONFLICT,
-        detail=f"Unit {unit.unit_number} was just booked by another agent. Please select another available unit."
-    )
+    raise HTTPException(409, "Unit was just booked by another agent.")
 ```
 
-1. The first request updates the unit row from `Available` to `Booked` and proceeds.
-2. The second simultaneous request matches `rowcount == 0`, rolls back, and returns **HTTP 409 Conflict**.
-3. A unique database index on `bookings.unit_id` serves as a secondary guarantee.
+- First request: rowcount = 1 → succeeds.
+- Second simultaneous request: rowcount = 0 → HTTP 409 Conflict.
+- Partial unique index `uq_active_booking_unit WHERE status='Confirmed'` is the second-layer guard, and also allows re-booking after cancellation.
 
 ---
 
-## 8. Free Cloud Hosting Guide (100% on Render: PostgreSQL + Backend + Frontend)
+## 7. Validation Rules
 
-You can host the entire system permanently on **Render** with zero credit card required:
+All enforced at the Pydantic schema layer (returns HTTP 400/422):
 
-```
-┌─────────────────────────────────────────────────────────────────────────┐
-│                             RENDER CLOUD                                │
-│                                                                         │
-│   ┌────────────────────────┐         ┌──────────────────────────────┐   │
-│   │    Render Frontend     │         │        Render Backend        │   │
-│   │  React 18 + Vite SPA   │────────▶│      FastAPI Web Service     │   │
-│   │   (Static Site - Free) │         │     (Python 3.12 - Free)     │   │
-│   └────────────────────────┘         └──────────────┬───────────────┘   │
-│                                                     │                   │
-│                                                     ▼                   │
-│                                      ┌──────────────────────────────┐   │
-│                                      │      Render PostgreSQL       │   │
-│                                      │     Managed Cloud DB (Free)  │   │
-│                                      └──────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────────────────┘
-```
-
-### Option A: 1-Click Render Blueprint (Recommended)
-
-The repository includes a pre-configured [`render.yaml`](file:///render.yaml) Blueprint that sets up PostgreSQL, the FastAPI Backend, and the React Frontend simultaneously:
-
-1. Push your changes to GitHub: `https://github.com/Yogesh-kk49/Real_estate_CRM`.
-2. Go to [https://dashboard.render.com](https://dashboard.render.com) and sign in.
-3. Click **New +** → **Blueprint**.
-4. Select your GitHub repository: `Real_estate_CRM`.
-5. Render will automatically read `render.yaml` and provision:
-   - **`estatepulse-db`**: Free PostgreSQL database.
-   - **`estatepulse-backend`**: Free Python FastAPI web service connected directly to the database.
-   - **`estatepulse-frontend`**: Free React static site connected directly to the backend.
-6. Click **Apply**.
-7. *That's it!* On initial launch, the backend automatically detects the fresh PostgreSQL database and seeds the demo **Administrator** (`admin@coromandel.in` / `Admin@1234`) and **Sales Staff** (`meera@coromandel.in` / `Sales@1234`) accounts automatically.
+| Field | Rule |
+|---|---|
+| `stage` | Must be `New / Contacted / Site Visit / Interested / Negotiation / Booked / Lost` |
+| `priority` | Must be `Low / Medium / High / Urgent` |
+| `unit_type` | Must be `1BHK / 2BHK / 3BHK / 4BHK / Penthouse / Villa` |
+| `budget_min` | Must be ≤ `budget_max` |
+| `phone` | Must be a valid 10-digit mobile number |
+| `next_followup_date` | Cannot be in the past |
+| Duplicate lead | Same email or phone → HTTP 400 |
+| Stage = `Booked` | Only allowed if a `Confirmed` booking exists for that lead |
 
 ---
 
-### Option B: Manual Setup on Render (Step-by-Step)
+## 8. API Reference
 
-If you prefer to configure each component manually in the Render Dashboard:
-
-#### Step 1: Create Free PostgreSQL Database on Render
-1. In Render Dashboard, click **New +** → **PostgreSQL**.
-2. **Name**: `estatepulse-db`
-3. **Database**: `estatepulse`
-4. **User**: `estatepulse_user`
-5. **Plan**: `Free`
-6. Click **Create Database**.
-7. Once created, copy the **Internal Database URL** (or External Database URL).
-
-#### Step 2: Deploy Backend Web Service
-1. Click **New +** → **Web Service**.
-2. Select your repository `Real_estate_CRM`.
-3. Settings:
-   - **Name**: `estatepulse-backend`
-   - **Root Directory**: `backend`
-   - **Runtime**: `Python 3`
-   - **Build Command**: `pip install -r requirements.txt`
-   - **Start Command**: `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
-   - **Instance Type**: `Free`
-4. **Environment Variables**:
-   - `DATABASE_URL`: *(Paste your Render PostgreSQL connection string)*
-   - `SECRET_KEY`: `estatepulse-interview-dev-super-secret-key-change-in-prod`
-   - `ENVIRONMENT`: `production`
-   - `CORS_ORIGINS`: `*`
-5. Click **Deploy Web Service**.
-6. Copy your public backend URL (e.g. `https://estatepulse-backend.onrender.com`).
-
-#### Step 3: Deploy Frontend Static Site
-1. Click **New +** → **Static Site**.
-2. Select your repository `Real_estate_CRM`.
-3. Settings:
-   - **Name**: `estatepulse-frontend`
-   - **Root Directory**: `frontend`
-   - **Build Command**: `npm install && npm run build`
-   - **Publish Directory**: `dist`
-4. **Environment Variables**:
-   - `VITE_API_URL`: `https://estatepulse-backend.onrender.com/api` *(replace with your Render backend URL + `/api`)*
-5. **Routes / Redirects**:
-   - Add a rewrite rule: Source `/*` → Destination `/index.html` (Status: `Rewrite`).
-6. Click **Create Static Site**.
+| Method | Endpoint | Auth | Description |
+|---|---|---|---|
+| `POST` | `/api/auth/login` | Public | Login; returns JWT |
+| `GET` | `/api/auth/me` | JWT | Current user profile |
+| `GET` | `/api/leads` | JWT | List leads (RBAC scoped) |
+| `POST` | `/api/leads` | JWT | Create lead |
+| `GET` | `/api/leads/{id}` | JWT | Full lead detail + timeline |
+| `PUT` / `PATCH` | `/api/leads/{id}` | JWT | Update lead |
+| `POST` | `/api/leads/{id}/notes` | JWT | Add interaction note |
+| `POST` / `PATCH` | `/api/leads/{id}/assign` | Admin | Assign/reassign lead |
+| `GET` | `/api/properties/projects` | JWT | List projects |
+| `POST` | `/api/properties/projects` | Admin | Create project |
+| `GET` | `/api/properties/buildings` | JWT | List buildings (filter by project_id) |
+| `POST` | `/api/properties/buildings` | Admin | Create building |
+| `GET` | `/api/properties/units` | JWT | List units |
+| `POST` | `/api/properties/units` | Admin | Create unit |
+| `POST` | `/api/bookings` | JWT | Create booking (atomic) |
+| `GET` | `/api/bookings` | JWT | List bookings |
+| `POST` | `/api/bookings/{id}/cancel` | JWT | Cancel booking; frees unit |
+| `GET` | `/api/users` | Admin | List all staff |
+| `POST` | `/api/users` | Admin | Recruit sales consultant |
+| `PATCH` | `/api/users/{id}` | Admin | Activate/deactivate account |
+| `GET` | `/api/dashboard/stats` | JWT | KPI metrics |
 
 ---
 
-### Verification:
-1. Open your `estatepulse-frontend.onrender.com` URL.
-2. The landing page loads with the full luxury design.
-3. Click **Sign In** and use **Load Admin** (`admin@coromandel.in`) or **Load Staff** (`meera@coromandel.in`).
-4. You are securely signed in and connected to your persistent cloud PostgreSQL database!
+## 9. Key Engineering Decisions
+
+1. **Partial unique indexes over `UNIQUE` column** — `uq_active_booking_unit` and `uq_active_booking_lead` are `WHERE status='Confirmed'` so cancelled bookings don't block re-booking.
+
+2. **Enum validation at schema layer** — Pydantic `@field_validator` on `stage`, `priority`, `unit_type`, and `availability` rejects unknown values before they reach the ORM.
+
+3. **`Booked` stage guard** — `lead_service.update_lead` refuses to set `stage=Booked` unless a `Booking(status='Confirmed')` row already exists for that lead; prevents orphaned stage transitions.
+
+4. **SECRET_KEY removed from repo** — `config.py` reads `SECRET_KEY` from environment variable; falls back to `secrets.token_urlsafe(32)` in dev. Set the env var in your Render service settings.
+
+5. **Both PUT and PATCH accepted on `/leads/{id}`** — the route registers both verbs so clients using either convention work correctly.
 
 ---
 
-## 9. Local Installation & Quick Start
+## 10. Running Locally
 
-### Prerequisites
-- **Node.js** v18+ (tested on Node v20/v22)
-- **Python** 3.10+ (tested on Python 3.12)
-- **Git**
-
----
-
-### Step 1: Clone the Repository
 ```bash
+# 1. Clone
 git clone https://github.com/Yogesh-kk49/Real_estate_CRM.git
 cd Real_estate_CRM
-```
 
----
-
-### Step 2: Backend Setup & Seeding
-
-1. Open a terminal and navigate to the backend directory:
-   ```powershell
-   cd backend
-   ```
-2. Install Python dependencies:
-   ```powershell
-   pip install -r requirements.txt
-   ```
-3. Initialize the database and seed demo data:
-   ```powershell
-   python seed.py
-   ```
-   *(Seeds 3 demo users, 4 Chennai luxury projects, 24 units, 13 leads with interaction timelines, and 4 confirmed bookings).*
-
-4. Start the FastAPI backend server:
-   ```powershell
-   python -m uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
-   ```
-   - API endpoint: `http://127.0.0.1:8000`
-   - Interactive Swagger API documentation: `http://127.0.0.1:8000/api/docs`
-
----
-
-### Step 3: Frontend Setup & Launch
-
-1. In a **second terminal**, navigate to the frontend directory:
-   ```powershell
-   cd frontend
-   ```
-2. Install dependencies:
-   ```powershell
-   npm install
-   ```
-3. Start the Vite development server:
-   ```powershell
-   npm run dev
-   ```
-4. Open your browser:
-   ```
-   http://localhost:5173
-   ```
-
----
-
-### Windows One-Click Quick Launch
-If you are on Windows, simply double-click the root batch file:
-```cmd
-run_dev.bat
-```
-*(Automatically verifies dependencies, seeds the database if needed, and launches both backend and frontend servers in separate windows).*
-
----
-
-## 10. Running Automated Test Suite
-
-Run the full automated test suite directly from the `backend` directory:
-
-```powershell
+# 2. Backend
 cd backend
+pip install -r requirements.txt
+python seed.py                             # seeds demo users, projects, leads, bookings
+python -m uvicorn app.main:app --reload    # http://localhost:8000/api/docs
 
-# 1. Test concurrency race conditions (confirms 201 Created & 409 Conflict)
-python tests/test_concurrency.py
+# 3. Frontend (new terminal)
+cd frontend
+npm install
+npm run dev                                # http://localhost:5173
 
-# 2. Test authentication & RBAC isolation (confirms 403 Forbidden & scoped queries)
-python tests/test_auth_rbac.py
-
-# 3. Test input validations (phone formatting, past follow-up dates, name constraints)
-python tests/test_validation.py
+# 4. Tests
+cd ..  # back to root
+python -m pytest backend/tests/test_validation.py -v    # 17 tests
+python backend/tests/test_concurrency.py
 ```
 
----
-
-## 11. API Endpoints Reference
-
-| Category | Method | Endpoint | Access | Description |
-|---|---|---|---|---|
-| **Auth** | `POST` | `/api/auth/login` | Public | Authenticate with email/password and obtain JWT token |
-| **Auth** | `GET` | `/api/auth/me` | Authenticated | Retrieve profile of the currently signed-in user |
-| **Users** | `GET` | `/api/users/employees` | Authenticated | List active sales consultants for assignment dropdowns |
-| **Users** | `GET` | `/api/users` | Admin Only | List all team accounts and assigned lead counts |
-| **Users** | `POST` | `/api/users` | Admin Only | Recruit a new sales consultant (`SALES_EMPLOYEE` only) |
-| **Users** | `PATCH`| `/api/users/{id}` | Admin Only | Update staff profile or activate/deactivate account |
-| **Leads** | `GET` | `/api/leads` | RBAC Scoped | List leads (filtered automatically for sales consultants) |
-| **Leads** | `POST` | `/api/leads` | Sales / Admin | Create a new lead with follow-up validation |
-| **Leads** | `GET` | `/api/leads/{id}` | RBAC Scoped | Retrieve full 360° lead detail and interaction timeline |
-| **Leads** | `PATCH`| `/api/leads/{id}` | RBAC Scoped | Update lead contact details, stage, or notes |
-| **Leads** | `POST` | `/api/leads/{id}/notes`| RBAC Scoped | Log a new client touchpoint (Call, Meeting, WhatsApp) |
-| **Leads** | `POST` | `/api/leads/{id}/assign`| Admin Only | Reassign a lead to another sales consultant |
-| **Properties** | `GET` | `/api/properties/projects` | Authenticated | List luxury developments with unit availability stats |
-| **Properties** | `GET` | `/api/properties/units` | Authenticated | Filter inventory units by project, floor, and status |
-| **Bookings** | `POST` | `/api/bookings` | Sales / Admin | Atomic concurrency-guarded property booking |
-| **Bookings** | `GET` | `/api/bookings` | RBAC Scoped | List confirmed booking ledger agreements |
-| **Dashboard** | `GET` | `/api/dashboard/stats` | RBAC Scoped | Real-time KPIs, pipeline funnel, follow-up alerts |
+> Windows users: `run_dev.bat` launches both servers in separate windows.
 
 ---
 
-## 12. Key Engineering & Product Decisions
+## 11. Deployment (Render)
 
-1. **Database-Level Atomic Conditional Updates Over In-Memory Locks**:
-   - In-memory locks fail when scaling across multiple worker processes or containers. By performing conditional `UPDATE` statements inside database transactions and checking affected row counts, we guarantee zero double-booking with zero distributed locking overhead.
+The repo includes `render.yaml`. Push to GitHub → Render Dashboard → **New → Blueprint** → select `Real_estate_CRM` → **Apply**.
 
-2. **Decoupled Modern Architecture**:
-   - Backend (FastAPI) and Frontend (React/Vite) have separate concerns and clean contracts. FastAPI generates compliant OpenAPI documentation at `/api/docs`, while Vite powers a responsive, type-safe React client.
-
-3. **Strict Staff-Only Recruitment**:
-   - Administrators can onboard and recruit sales consultants (`SALES_EMPLOYEE`), but the recruitment interface and API schema strictly prohibit creating additional administrators, safeguarding organizational privilege hierarchy.
-
-4. **Production-Ready PostgreSQL with Connection Pooling**:
-   - Configured with SQLAlchemy connection recycling and pre-pinging, enabling zero-config deployment to serverless and hosted PostgreSQL clusters like Neon or AWS RDS while retaining local fallback capability.
-
-5. **Contextual Error Handling**:
-   - Both Pydantic schema validation errors and backend exceptions are normalized into actionable, user-friendly sentences instead of raw stack traces or ambiguous errors.
+Set these environment variables on the backend service:
+- `DATABASE_URL` — Render PostgreSQL internal URL
+- `SECRET_KEY` — a strong random string (e.g., `openssl rand -hex 32`)
+- `ENVIRONMENT` — `production`
+- `CORS_ORIGINS` — your frontend URL (e.g., `https://real-estate-crm-5k5j.onrender.com`)
 
 ---
 
-## 13. License
+## 12. License
 
-Developed for evaluation and demonstration purposes. All rights reserved © 2026 EstatePulse.
+Developed for evaluation and demonstration purposes. © 2026 EstatePulse.

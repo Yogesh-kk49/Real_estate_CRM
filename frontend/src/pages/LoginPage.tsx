@@ -126,10 +126,10 @@ export const LoginPage: React.FC = () => {
 
             <Button
               variant="primary"
-              size="md"
-              icon={<KeyRound className="w-4 h-4" />}
+              size="sm"
+              icon={<KeyRound className="w-3.5 h-3.5 sm:w-4 sm:h-4" />}
               onClick={() => handleOpenModal()}
-              className="shadow-sm shadow-brand-500/20 font-bold"
+              className="shadow-sm shadow-brand-500/20 font-bold px-3 py-1.5 text-xs sm:px-4 sm:py-2 sm:text-sm"
             >
               Sign In
             </Button>

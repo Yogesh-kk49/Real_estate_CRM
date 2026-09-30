@@ -1,7 +1,12 @@
 from datetime import date, datetime
 import re
 from typing import List, Optional
-from pydantic import BaseModel, EmailStr, Field, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator, model_validator
+from app.models.lead import LeadStage, LeadPriority
+
+
+VALID_STAGES = {s.value for s in LeadStage}
+VALID_PRIORITIES = {p.value for p in LeadPriority}
 
 
 class LeadNoteCreate(BaseModel):
@@ -26,8 +31,8 @@ class LeadBase(BaseModel):
     name: str = Field(..., description="Lead full name")
     email: EmailStr = Field(..., description="Lead email address")
     phone: str = Field(..., description="Lead contact number")
-    stage: str = Field(default="New", description="Lead lifecycle stage")
-    priority: str = Field(default="Medium", description="Low, Medium, High, Urgent")
+    stage: str = Field(default=LeadStage.NEW.value, description="Lead lifecycle stage")
+    priority: str = Field(default=LeadPriority.MEDIUM.value, description="Low, Medium, High, Urgent")
     source: str = Field(default="Direct Inquiry")
     budget_min: Optional[float] = None
     budget_max: Optional[float] = None
@@ -49,6 +54,29 @@ class LeadBase(BaseModel):
         if len(clean_phone) < 10 or not clean_phone.isdigit():
             raise ValueError("Please provide a valid phone number with at least 10 digits.")
         return v.strip()
+
+    @field_validator("stage")
+    @classmethod
+    def validate_stage(cls, v: str) -> str:
+        if v not in VALID_STAGES:
+            valid_list = ", ".join(sorted(VALID_STAGES))
+            raise ValueError(f"Invalid lead stage '{v}'. Must be one of: {valid_list}")
+        return v
+
+    @field_validator("priority")
+    @classmethod
+    def validate_priority(cls, v: str) -> str:
+        if v not in VALID_PRIORITIES:
+            valid_list = ", ".join(sorted(VALID_PRIORITIES))
+            raise ValueError(f"Invalid priority '{v}'. Must be one of: {valid_list}")
+        return v
+
+    @model_validator(mode="after")
+    def validate_budget_range(self):
+        if self.budget_min is not None and self.budget_max is not None:
+            if self.budget_min > self.budget_max:
+                raise ValueError("Minimum budget cannot be greater than maximum budget.")
+        return self
 
 
 class LeadCreate(LeadBase):
@@ -96,12 +124,35 @@ class LeadUpdate(BaseModel):
             return v.strip()
         return v
 
+    @field_validator("stage")
+    @classmethod
+    def validate_stage(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in VALID_STAGES:
+            valid_list = ", ".join(sorted(VALID_STAGES))
+            raise ValueError(f"Invalid lead stage '{v}'. Must be one of: {valid_list}")
+        return v
+
+    @field_validator("priority")
+    @classmethod
+    def validate_priority(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in VALID_PRIORITIES:
+            valid_list = ", ".join(sorted(VALID_PRIORITIES))
+            raise ValueError(f"Invalid priority '{v}'. Must be one of: {valid_list}")
+        return v
+
     @field_validator("next_followup_date")
     @classmethod
     def validate_followup_date(cls, v: Optional[date]) -> Optional[date]:
         if v and v < date.today():
             raise ValueError("Follow-up date cannot be earlier than today.")
         return v
+
+    @model_validator(mode="after")
+    def validate_budget_range(self):
+        if self.budget_min is not None and self.budget_max is not None:
+            if self.budget_min > self.budget_max:
+                raise ValueError("Minimum budget cannot be greater than maximum budget.")
+        return self
 
 
 class LeadAssignRequest(BaseModel):

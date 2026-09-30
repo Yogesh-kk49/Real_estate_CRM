@@ -9,6 +9,11 @@ import { formatIndianCurrency, formatFullINR } from '../utils/currency';
 import { AvailabilityBadge } from '../components/ui/StatusBadge';
 import { Button } from '../components/ui/Button';
 import { BookingModal } from '../components/bookings/BookingModal';
+import {
+  CreateProjectModal,
+  CreateBuildingModal,
+  CreateUnitModal,
+} from '../components/properties/PropertyModals';
 import { CardSkeleton } from '../components/ui/LoadingSkeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import { useAuth } from '../contexts/AuthContext';
@@ -20,6 +25,11 @@ export const PropertiesPage: React.FC = () => {
   const [selectedProjectId, setSelectedProjectId] = useState<number | null>(null);
   const [units, setUnits] = useState<Unit[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+
+  // Admin Management Modals
+  const [isProjectModalOpen, setIsProjectModalOpen] = useState(false);
+  const [isBuildingModalOpen, setIsBuildingModalOpen] = useState(false);
+  const [isUnitModalOpen, setIsUnitModalOpen] = useState(false);
 
   // Filters
   const [unitTypeFilter, setUnitTypeFilter] = useState('All');
@@ -83,6 +93,37 @@ export const PropertiesPage: React.FC = () => {
             Hierarchy: Project → Building → Property Units. Real-time availability and atomic double-booking lock.
           </p>
         </div>
+
+        {isAdmin && (
+          <div className="flex flex-wrap items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<Plus className="w-3.5 h-3.5" />}
+              onClick={() => setIsProjectModalOpen(true)}
+            >
+              Add Project
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              icon={<Plus className="w-3.5 h-3.5" />}
+              onClick={() => setIsBuildingModalOpen(true)}
+              disabled={projects.length === 0}
+            >
+              Add Building
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              icon={<Plus className="w-3.5 h-3.5" />}
+              onClick={() => setIsUnitModalOpen(true)}
+              disabled={projects.length === 0}
+            >
+              Add Unit
+            </Button>
+          </div>
+        )}
       </div>
 
       {/* Project Selector Tabs */}
@@ -302,6 +343,38 @@ export const PropertiesPage: React.FC = () => {
           setBookingUnit(null);
         }}
         preselectedUnit={bookingUnit}
+        onSuccess={() => {
+          fetchUnits();
+          fetchProjects();
+        }}
+      />
+
+      {/* Admin Property Management Modals */}
+      <CreateProjectModal
+        isOpen={isProjectModalOpen}
+        onClose={() => setIsProjectModalOpen(false)}
+        onSuccess={() => {
+          fetchProjects();
+          fetchUnits();
+        }}
+      />
+
+      <CreateBuildingModal
+        isOpen={isBuildingModalOpen}
+        onClose={() => setIsBuildingModalOpen(false)}
+        projects={projects}
+        defaultProjectId={selectedProjectId || undefined}
+        onSuccess={() => {
+          fetchProjects();
+          fetchUnits();
+        }}
+      />
+
+      <CreateUnitModal
+        isOpen={isUnitModalOpen}
+        onClose={() => setIsUnitModalOpen(false)}
+        projects={projects}
+        defaultProjectId={selectedProjectId || undefined}
         onSuccess={() => {
           fetchUnits();
           fetchProjects();

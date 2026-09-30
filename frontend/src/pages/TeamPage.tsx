@@ -234,7 +234,7 @@ export const TeamPage: React.FC = () => {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
         {[
           { label: 'Admin Accounts', value: adminCount, icon: Shield, color: 'text-amber-700 bg-amber-100 border border-amber-200' },
           { label: 'Sales Consultants', value: salesCount, icon: Award, color: 'text-emerald-700 bg-emerald-100 border border-emerald-200' },

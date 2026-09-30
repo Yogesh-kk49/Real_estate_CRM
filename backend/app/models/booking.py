@@ -1,6 +1,6 @@
 from datetime import datetime
 import enum
-from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Text, UniqueConstraint
+from sqlalchemy import Column, DateTime, Float, ForeignKey, Integer, String, Text, Index
 from sqlalchemy.orm import relationship
 from app.core.database import Base
 
@@ -15,7 +15,7 @@ class Booking(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     lead_id = Column(Integer, ForeignKey("leads.id", ondelete="RESTRICT"), nullable=False, index=True)
-    unit_id = Column(Integer, ForeignKey("units.id", ondelete="RESTRICT"), nullable=False, unique=True, index=True)
+    unit_id = Column(Integer, ForeignKey("units.id", ondelete="RESTRICT"), nullable=False, index=True)
     booked_by_user_id = Column(Integer, ForeignKey("users.id", ondelete="RESTRICT"), nullable=False, index=True)
     
     agreement_value = Column(Float, nullable=False)
@@ -31,3 +31,23 @@ class Booking(Base):
     lead = relationship("Lead", back_populates="booking")
     unit = relationship("Unit", back_populates="booking")
     booked_by = relationship("User", back_populates="bookings")
+
+    # Partial unique indexes:
+    # 1. Enforce that only ONE CONFIRMED booking can exist for a given unit (allows re-booking if cancelled)
+    # 2. Enforce that only ONE CONFIRMED booking can exist for a given lead (prevents race on duplicate booking)
+    __table_args__ = (
+        Index(
+            "uq_active_booking_unit",
+            "unit_id",
+            unique=True,
+            postgresql_where=(status == BookingStatus.CONFIRMED.value),
+            sqlite_where=(status == BookingStatus.CONFIRMED.value),
+        ),
+        Index(
+            "uq_active_booking_lead",
+            "lead_id",
+            unique=True,
+            postgresql_where=(status == BookingStatus.CONFIRMED.value),
+            sqlite_where=(status == BookingStatus.CONFIRMED.value),
+        ),
+    )

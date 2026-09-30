@@ -102,6 +102,7 @@ def get_lead(
 
 
 @router.put("/{id}", response_model=LeadResponse)
+@router.patch("/{id}", response_model=LeadResponse)
 def update_existing_lead(
     id: int,
     lead_in: LeadUpdate,
@@ -113,6 +114,7 @@ def update_existing_lead(
 
 
 @router.patch("/{id}/assign", response_model=LeadResponse)
+@router.post("/{id}/assign", response_model=LeadResponse)
 def assign_lead(
     id: int,
     assign_req: LeadAssignRequest,

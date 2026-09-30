@@ -136,6 +136,30 @@ def create_building(
     }
 
 
+@router.get("/buildings", response_model=List[BuildingResponse])
+def list_buildings(
+    project_id: Optional[int] = Query(None, description="Filter by project ID"),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    query = db.query(Building)
+    if project_id:
+        query = query.filter(Building.project_id == project_id)
+    buildings = query.order_by(Building.name.asc()).all()
+    results = []
+    for b in buildings:
+        results.append({
+            "id": b.id,
+            "project_id": b.project_id,
+            "name": b.name,
+            "total_floors": b.total_floors,
+            "units_count": len(b.units),
+            "available_units_count": sum(1 for u in b.units if u.availability == UnitAvailability.AVAILABLE.value),
+            "created_at": b.created_at,
+        })
+    return results
+
+
 @router.get("/units", response_model=List[UnitResponse])
 def list_units(
     project_id: Optional[int] = Query(None, description="Filter by project ID"),

@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import {
   BookmarkCheck, Plus, Search, Building2, User,
-  Calendar, FileText, CheckCircle2, DollarSign
+  Calendar, FileText, CheckCircle2, DollarSign, XCircle, Ban
 } from 'lucide-react';
 import { Booking } from '../types';
 import { bookingsApi } from '../api/bookings';
@@ -12,14 +12,21 @@ import { Button } from '../components/ui/Button';
 import { TableSkeleton } from '../components/ui/LoadingSkeleton';
 import { EmptyState } from '../components/ui/EmptyState';
 import { BookingModal } from '../components/bookings/BookingModal';
+import { ConfirmDialog } from '../components/ui/ConfirmDialog';
 import { useAuth } from '../contexts/AuthContext';
+import { useToast } from '../contexts/ToastContext';
 
 export const BookingsPage: React.FC = () => {
   const { isAdmin, user } = useAuth();
+  const { showToast } = useToast();
   const [bookings, setBookings] = useState<Booking[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [isBookingModalOpen, setIsBookingModalOpen] = useState(false);
+
+  // Cancellation state
+  const [cancellingBooking, setCancellingBooking] = useState<Booking | null>(null);
+  const [isCancelling, setIsCancelling] = useState(false);
 
   const fetchBookings = async () => {
     setIsLoading(true);
@@ -37,6 +44,24 @@ export const BookingsPage: React.FC = () => {
     fetchBookings();
   }, [user]);
 
+  const handleConfirmCancel = async () => {
+    if (!cancellingBooking) return;
+    setIsCancelling(true);
+    try {
+      await bookingsApi.cancelBooking(cancellingBooking.id);
+      showToast(
+        'success',
+        `Booking BK-${cancellingBooking.id.toString().padStart(4, '0')} cancelled. Unit ${cancellingBooking.unit_number} is now Available.`
+      );
+      setCancellingBooking(null);
+      fetchBookings();
+    } catch (err: any) {
+      showToast('error', err.message || 'Failed to cancel booking.');
+    } finally {
+      setIsCancelling(false);
+    }
+  };
+
   const filteredBookings = bookings.filter((b) => {
     if (!search.trim()) return true;
     const term = search.toLowerCase();
@@ -45,11 +70,13 @@ export const BookingsPage: React.FC = () => {
       b.unit_number.toLowerCase().includes(term) ||
       b.building_name.toLowerCase().includes(term) ||
       b.project_name.toLowerCase().includes(term) ||
+      b.status.toLowerCase().includes(term) ||
       (b.payment_reference && b.payment_reference.toLowerCase().includes(term))
     );
   });
 
-  const totalValue = filteredBookings.reduce((sum, b) => sum + b.agreement_value, 0);
+  const activeBookings = filteredBookings.filter((b) => b.status === 'Confirmed');
+  const totalValue = activeBookings.reduce((sum, b) => sum + b.agreement_value, 0);
 
   return (
     <div className="space-y-6">
@@ -57,10 +84,10 @@ export const BookingsPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-            Confirmed Property Bookings
+            Property Bookings Ledger
           </h1>
           <p className="text-xs sm:text-sm text-slate-500 mt-1">
-            Official sales agreements, advance receipts, and customer-unit allocations.
+            Official sales agreements, advance receipts, customer-unit allocations, and cancellations.
           </p>
         </div>
 
@@ -77,8 +104,8 @@ export const BookingsPage: React.FC = () => {
       {/* Stats Summary Bar */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
         <div className="bg-white p-4 rounded-xl border border-estate-border shadow-xs">
-          <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700">Total Bookings</span>
-          <p className="text-xl font-extrabold text-slate-900 font-mono mt-1">{filteredBookings.length} Units</p>
+          <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700">Active Bookings</span>
+          <p className="text-xl font-extrabold text-slate-900 font-mono mt-1">{activeBookings.length} Units</p>
         </div>
         <div className="bg-white p-4 rounded-xl border border-estate-border shadow-xs">
           <span className="text-[11px] font-extrabold uppercase tracking-wider text-slate-700">Total Agreement Value</span>
@@ -98,7 +125,7 @@ export const BookingsPage: React.FC = () => {
           <Search className="w-4 h-4 text-slate-500 absolute left-3 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search booking by customer, unit number, project, or reference..."
+            placeholder="Search booking by customer, unit, project, status, or reference..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-9 pr-4 py-2 text-xs border border-slate-300 rounded-md focus:outline-none focus:border-brand-500 text-slate-900 font-medium"
@@ -113,7 +140,7 @@ export const BookingsPage: React.FC = () => {
         <EmptyState
           icon={BookmarkCheck}
           title="No bookings recorded"
-          description="There are no confirmed bookings matching your search or assigned territory."
+          description="There are no confirmed or cancelled bookings matching your search."
           actionLabel="Create First Booking"
           onAction={() => setIsBookingModalOpen(true)}
         />
@@ -124,6 +151,7 @@ export const BookingsPage: React.FC = () => {
               <thead>
                 <tr className="bg-slate-50 border-b border-slate-300 text-slate-700 font-extrabold uppercase tracking-wider">
                   <th className="py-3.5 px-5">Booking Ref</th>
+                  <th className="py-3.5 px-4">Status</th>
                   <th className="py-3.5 px-4">Customer</th>
                   <th className="py-3.5 px-4">Allocated Unit</th>
                   <th className="py-3.5 px-4">Project & Building</th>
@@ -131,69 +159,110 @@ export const BookingsPage: React.FC = () => {
                   <th className="py-3.5 px-4">Token Paid</th>
                   <th className="py-3.5 px-4">Consultant</th>
                   <th className="py-3.5 px-4 text-right">Booking Date</th>
+                  <th className="py-3.5 px-4 text-center">Actions</th>
                 </tr>
               </thead>
 
               <tbody className="divide-y divide-slate-100">
-                {filteredBookings.map((b) => (
-                  <tr key={b.id} className="hover:bg-slate-50/70 transition-colors">
-                    {/* Booking ID & Status */}
-                    <td className="py-3.5 px-5">
-                      <div className="flex items-center gap-1.5">
-                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-                        <span className="font-mono font-bold text-slate-900">BK-{b.id.toString().padStart(4, '0')}</span>
-                      </div>
-                      <span className="text-[10px] text-slate-400 font-mono block mt-0.5">
-                        {b.payment_reference || 'Ref: Direct'}
-                      </span>
-                    </td>
+                {filteredBookings.map((b) => {
+                  const isConfirmed = b.status === 'Confirmed';
+                  const canCancel = isConfirmed && (isAdmin || user?.id === b.booked_by_user_id);
 
-                    {/* Customer */}
-                    <td className="py-3.5 px-4">
-                      <Link
-                        to={`/leads/${b.lead_id}`}
-                        className="font-bold text-slate-900 hover:text-brand-600 hover:underline block"
-                      >
-                        {b.lead_name}
-                      </Link>
-                      <span className="text-[11px] font-mono text-slate-500">{b.lead_phone}</span>
-                    </td>
+                  return (
+                    <tr key={b.id} className={`hover:bg-slate-50/70 transition-colors ${!isConfirmed ? 'opacity-65 bg-slate-50/40' : ''}`}>
+                      {/* Booking ID */}
+                      <td className="py-3.5 px-5">
+                        <div className="flex items-center gap-1.5">
+                          {isConfirmed ? (
+                            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 flex-shrink-0" />
+                          ) : (
+                            <Ban className="w-3.5 h-3.5 text-slate-400 flex-shrink-0" />
+                          )}
+                          <span className="font-mono font-bold text-slate-900">BK-{b.id.toString().padStart(4, '0')}</span>
+                        </div>
+                        <span className="text-[10px] text-slate-400 font-mono block mt-0.5">
+                          {b.payment_reference || 'Ref: Direct'}
+                        </span>
+                      </td>
 
-                    {/* Unit */}
-                    <td className="py-3.5 px-4">
-                      <span className="font-extrabold font-mono text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
-                        Unit {b.unit_number}
-                      </span>
-                      <span className="text-[11px] text-slate-500 block mt-0.5">{b.unit_type}</span>
-                    </td>
+                      {/* Status */}
+                      <td className="py-3.5 px-4">
+                        <span
+                          className={`inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold ${
+                            isConfirmed
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-200'
+                              : 'bg-slate-200 text-slate-700 border border-slate-300'
+                          }`}
+                        >
+                          {b.status}
+                        </span>
+                      </td>
 
-                    {/* Project & Building */}
-                    <td className="py-3.5 px-4">
-                      <p className="font-semibold text-slate-800">{b.project_name}</p>
-                      <p className="text-[11px] text-slate-500">{b.building_name}</p>
-                    </td>
+                      {/* Customer */}
+                      <td className="py-3.5 px-4">
+                        <Link
+                          to={`/leads/${b.lead_id}`}
+                          className="font-bold text-slate-900 hover:text-brand-600 hover:underline block"
+                        >
+                          {b.lead_name}
+                        </Link>
+                        <span className="text-[11px] font-mono text-slate-500">{b.lead_phone}</span>
+                      </td>
 
-                    {/* Agreement Value */}
-                    <td className="py-3.5 px-4 font-mono font-bold text-emerald-700 text-sm">
-                      {formatIndianCurrency(b.agreement_value)}
-                    </td>
+                      {/* Unit */}
+                      <td className="py-3.5 px-4">
+                        <span className="font-extrabold font-mono text-slate-900 bg-slate-100 px-2 py-0.5 rounded border border-slate-200">
+                          Unit {b.unit_number}
+                        </span>
+                        <span className="text-[11px] text-slate-500 block mt-0.5">{b.unit_type}</span>
+                      </td>
 
-                    {/* Token Paid */}
-                    <td className="py-3.5 px-4 font-mono text-slate-700">
-                      {formatIndianCurrency(b.booking_amount)}
-                    </td>
+                      {/* Project & Building */}
+                      <td className="py-3.5 px-4">
+                        <p className="font-semibold text-slate-800">{b.project_name}</p>
+                        <p className="text-[11px] text-slate-500">{b.building_name}</p>
+                      </td>
 
-                    {/* Consultant */}
-                    <td className="py-3.5 px-4 text-slate-700">
-                      {b.booked_by_name}
-                    </td>
+                      {/* Agreement Value */}
+                      <td className="py-3.5 px-4 font-mono font-bold text-emerald-700 text-sm">
+                        {formatIndianCurrency(b.agreement_value)}
+                      </td>
 
-                    {/* Date */}
-                    <td className="py-3.5 px-4 text-right font-mono text-slate-500">
-                      {formatDate(b.booking_date)}
-                    </td>
-                  </tr>
-                ))}
+                      {/* Token Paid */}
+                      <td className="py-3.5 px-4 font-mono text-slate-700">
+                        {formatIndianCurrency(b.booking_amount)}
+                      </td>
+
+                      {/* Consultant */}
+                      <td className="py-3.5 px-4 text-slate-700">
+                        {b.booked_by_name}
+                      </td>
+
+                      {/* Date */}
+                      <td className="py-3.5 px-4 text-right font-mono text-slate-500">
+                        {formatDate(b.booking_date)}
+                      </td>
+
+                      {/* Action */}
+                      <td className="py-3.5 px-4 text-center">
+                        {canCancel ? (
+                          <button
+                            onClick={() => setCancellingBooking(b)}
+                            className="inline-flex items-center gap-1 text-[11px] font-bold text-red-600 hover:text-red-800 hover:bg-red-50 px-2 py-1 rounded transition-colors"
+                            title="Cancel this booking and free the unit back to Available inventory"
+                          >
+                            <XCircle className="w-3.5 h-3.5" />
+                            Cancel
+                          </button>
+                        ) : (
+                          <span className="text-[10px] text-slate-400 font-medium">
+                            {isConfirmed ? 'Read-only' : 'Cancelled'}
+                          </span>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
@@ -205,6 +274,19 @@ export const BookingsPage: React.FC = () => {
         isOpen={isBookingModalOpen}
         onClose={() => setIsBookingModalOpen(false)}
         onSuccess={fetchBookings}
+      />
+
+      {/* Cancel Confirmation Dialog */}
+      <ConfirmDialog
+        isOpen={cancellingBooking !== null}
+        onClose={() => setCancellingBooking(null)}
+        onConfirm={handleConfirmCancel}
+        title={`Cancel Booking BK-${cancellingBooking?.id.toString().padStart(4, '0')}?`}
+        message={`Are you sure you want to cancel the booking for ${cancellingBooking?.lead_name} on Unit ${cancellingBooking?.unit_number} (${cancellingBooking?.project_name})? This will immediately return Unit ${cancellingBooking?.unit_number} back to Available inventory for other sales consultants and record a cancellation note.`}
+        confirmText="Yes, Cancel Booking"
+        cancelText="Keep Booking"
+        isDangerous={true}
+        isLoading={isCancelling}
       />
     </div>
   );

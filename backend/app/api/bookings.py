@@ -6,7 +6,7 @@ from app.core.dependencies import get_current_user
 from app.models.booking import Booking
 from app.models.user import User, UserRole
 from app.schemas.booking import BookingCreate, BookingResponse
-from app.services.booking_service import create_booking_with_concurrency_lock
+from app.services.booking_service import create_booking_with_concurrency_lock, cancel_booking
 
 router = APIRouter(prefix="/bookings", tags=["Bookings"])
 
@@ -76,3 +76,14 @@ def get_booking(
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Access denied.")
 
     return _format_booking(booking)
+
+
+@router.post("/{id}/cancel", response_model=BookingResponse)
+def cancel_existing_booking(
+    id: int,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    booking = cancel_booking(db, id, current_user)
+    return _format_booking(booking)
+

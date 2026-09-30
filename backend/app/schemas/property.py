@@ -1,6 +1,11 @@
 from datetime import datetime
 from typing import List, Optional
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
+from app.models.property import UnitType, UnitAvailability
+
+
+VALID_UNIT_TYPES = {t.value for t in UnitType}
+VALID_AVAILABILITIES = {a.value for a in UnitAvailability}
 
 
 class UnitBase(BaseModel):
@@ -11,7 +16,23 @@ class UnitBase(BaseModel):
     carpet_sqft: Optional[float] = None
     facing: Optional[str] = "East"
     price: float = Field(..., gt=0)
-    availability: str = Field(default="Available")
+    availability: str = Field(default=UnitAvailability.AVAILABLE.value)
+
+    @field_validator("unit_type")
+    @classmethod
+    def validate_unit_type(cls, v: str) -> str:
+        if v not in VALID_UNIT_TYPES:
+            valid_list = ", ".join(sorted(VALID_UNIT_TYPES))
+            raise ValueError(f"Invalid unit type '{v}'. Must be one of: {valid_list}")
+        return v
+
+    @field_validator("availability")
+    @classmethod
+    def validate_availability(cls, v: str) -> str:
+        if v not in VALID_AVAILABILITIES:
+            valid_list = ", ".join(sorted(VALID_AVAILABILITIES))
+            raise ValueError(f"Invalid availability '{v}'. Must be one of: {valid_list}")
+        return v
 
 
 class UnitCreate(UnitBase):
@@ -27,6 +48,22 @@ class UnitUpdate(BaseModel):
     facing: Optional[str] = None
     price: Optional[float] = None
     availability: Optional[str] = None
+
+    @field_validator("unit_type")
+    @classmethod
+    def validate_unit_type(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in VALID_UNIT_TYPES:
+            valid_list = ", ".join(sorted(VALID_UNIT_TYPES))
+            raise ValueError(f"Invalid unit type '{v}'. Must be one of: {valid_list}")
+        return v
+
+    @field_validator("availability")
+    @classmethod
+    def validate_availability(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in VALID_AVAILABILITIES:
+            valid_list = ", ".join(sorted(VALID_AVAILABILITIES))
+            raise ValueError(f"Invalid availability '{v}'. Must be one of: {valid_list}")
+        return v
 
 
 class UnitResponse(UnitBase):

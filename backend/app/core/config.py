@@ -1,6 +1,8 @@
 import json
+import os
+import secrets
 from typing import List, Union
-from pydantic import field_validator
+from pydantic import Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -16,7 +18,11 @@ class Settings(BaseSettings):
     VERSION: str = "1.0.0"
     ENVIRONMENT: str = "development"
     API_V1_STR: str = "/api"
-    SECRET_KEY: str = "estatepulse-interview-dev-super-secret-key-change-in-prod"
+    # SECRET_KEY must be set via the SECRET_KEY environment variable in production.
+    # If not set, a secure random key is generated per process (dev convenience only).
+    SECRET_KEY: str = Field(
+        default_factory=lambda: os.getenv("SECRET_KEY", secrets.token_urlsafe(32))
+    )
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60 * 24  # 24 hours
     DATABASE_URL: str = "sqlite:///./estatepulse.db"

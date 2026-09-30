@@ -25,4 +25,9 @@ export const bookingsApi = {
     const res = await apiClient.get<Booking>(`/bookings/${id}`);
     return res.data;
   },
+
+  cancelBooking: async (id: number): Promise<Booking> => {
+    const res = await apiClient.post<Booking>(`/bookings/${id}/cancel`);
+    return res.data;
+  },
 };

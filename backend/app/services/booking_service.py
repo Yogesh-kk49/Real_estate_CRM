@@ -138,3 +138,58 @@ def create_booking_with_concurrency_lock(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"An unexpected error occurred while processing the booking: {str(e)}"
         )
+
+
+def cancel_booking(db: Session, booking_id: int, current_user: User) -> Booking:
+    booking = db.query(Booking).filter(Booking.id == booking_id).first()
+    if not booking:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="The requested booking does not exist."
+        )
+
+    # Permission check: Admin or the consultant who executed the booking
+    if current_user.role != UserRole.ADMIN.value and booking.booked_by_user_id != current_user.id:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You do not have permission to cancel this booking."
+        )
+
+    if booking.status == BookingStatus.CANCELLED.value:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="This booking has already been cancelled."
+        )
+
+    now = datetime.utcnow()
+    booking.status = BookingStatus.CANCELLED.value
+
+    # Free the unit back to Available
+    unit = db.query(Unit).filter(Unit.id == booking.unit_id).first()
+    unit_number = "Unknown"
+    if unit:
+        unit.availability = UnitAvailability.AVAILABLE.value
+        unit.updated_at = now
+        unit_number = unit.unit_number
+
+    # Revert lead stage from Booked back to Negotiation
+    lead = db.query(Lead).filter(Lead.id == booking.lead_id).first()
+    if lead:
+        if lead.stage == LeadStage.BOOKED.value:
+            lead.stage = LeadStage.NEGOTIATION.value
+            lead.updated_at = now
+
+        # Append cancellation audit note to lead timeline
+        audit_note = LeadNote(
+            lead_id=lead.id,
+            author_id=current_user.id,
+            note_type="Booking Cancellation",
+            content=f"Booking #{booking.id} for Unit {unit_number} was cancelled by {current_user.full_name}. Unit has been returned to Available inventory.",
+            created_at=now,
+        )
+        db.add(audit_note)
+
+    db.commit()
+    db.refresh(booking)
+    return booking
+

@@ -3,6 +3,7 @@ from typing import List, Optional
 from fastapi import HTTPException, status
 from sqlalchemy import or_
 from sqlalchemy.orm import Session
+from app.models.booking import Booking, BookingStatus
 from app.models.lead import Lead, LeadNote, LeadStage
 from app.models.user import User, UserRole
 from app.schemas.lead import LeadCreate, LeadNoteCreate, LeadUpdate
@@ -65,6 +66,24 @@ def get_lead_by_id_with_perm_check(db: Session, lead_id: int, user: User) -> Lea
 
 
 def create_lead(db: Session, lead_in: LeadCreate, current_user: User) -> Lead:
+    # 1. Prevent duplicate leads with same email or phone
+    existing_lead = db.query(Lead).filter(
+        or_(Lead.email == lead_in.email.strip().lower(), Lead.phone == lead_in.phone.strip())
+    ).first()
+    if existing_lead:
+        field = "email address" if existing_lead.email.lower() == lead_in.email.strip().lower() else "phone number"
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=f"A lead with this {field} already exists ({existing_lead.name})."
+        )
+
+    # 2. Block initial creation with 'Booked' stage without a booking
+    if lead_in.stage == LeadStage.BOOKED.value:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Cannot set lead stage to 'Booked' on creation. Create the lead first, then execute a property booking."
+        )
+
     # Assign employee logic
     assigned_id = lead_in.assigned_user_id
     if current_user.role == UserRole.SALES_EMPLOYEE.value:
@@ -76,8 +95,8 @@ def create_lead(db: Session, lead_in: LeadCreate, current_user: User) -> Lead:
     now = datetime.utcnow()
     lead = Lead(
         name=lead_in.name,
-        email=lead_in.email,
-        phone=lead_in.phone,
+        email=lead_in.email.strip().lower(),
+        phone=lead_in.phone.strip(),
         stage=lead_in.stage or LeadStage.NEW.value,
         priority=lead_in.priority,
         source=lead_in.source,
@@ -121,11 +140,46 @@ def update_lead(db: Session, lead_id: int, lead_in: LeadUpdate, current_user: Us
                 detail="Only administrators can reassign leads."
             )
 
+    # Check budget range consistency with existing values
+    new_min = update_data.get("budget_min", lead.budget_min)
+    new_max = update_data.get("budget_max", lead.budget_max)
+    if new_min is not None and new_max is not None and new_min > new_max:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Minimum budget cannot be greater than maximum budget."
+        )
+
+    # Check if duplicate email/phone when updating contact info
+    if "email" in update_data or "phone" in update_data:
+        new_email = update_data.get("email", lead.email)
+        new_phone = update_data.get("phone", lead.phone)
+        dup = db.query(Lead).filter(
+            Lead.id != lead.id,
+            or_(Lead.email == new_email, Lead.phone == new_phone)
+        ).first()
+        if dup:
+            field = "email address" if dup.email == new_email else "phone number"
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Another lead with this {field} already exists ({dup.name})."
+            )
+
     stage_changed = False
     old_stage = lead.stage
 
     for field, value in update_data.items():
         if field == "stage" and value != old_stage:
+            # Enforce: Cannot transition to Booked without an active confirmed booking
+            if value == LeadStage.BOOKED.value:
+                active_booking = db.query(Booking).filter(
+                    Booking.lead_id == lead.id,
+                    Booking.status == BookingStatus.CONFIRMED.value
+                ).first()
+                if not active_booking:
+                    raise HTTPException(
+                        status_code=status.HTTP_400_BAD_REQUEST,
+                        detail="Cannot update lead stage to 'Booked' without an active confirmed property booking. Please create a booking first."
+                    )
             stage_changed = True
         setattr(lead, field, value)
 
