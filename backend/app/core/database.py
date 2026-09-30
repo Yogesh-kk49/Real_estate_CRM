@@ -7,6 +7,12 @@ db_url = settings.DATABASE_URL
 if db_url.startswith("postgres://"):
     db_url = db_url.replace("postgres://", "postgresql://", 1)
 
+# Explicitly use psycopg2 dialect so SQLAlchemy doesn't try to load psycopg (v3).
+# requirements.txt ships psycopg2-binary; without this pin Python 3.14 + SQLAlchemy 2.x
+# resolves the bare 'postgresql://' scheme to the psycopg (v3) driver which isn't installed.
+if db_url.startswith("postgresql://") and "+psycopg" not in db_url:
+    db_url = db_url.replace("postgresql://", "postgresql+psycopg2://", 1)
+
 engine_kwargs = {"echo": False}
 
 if db_url.startswith("sqlite"):
