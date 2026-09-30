@@ -109,9 +109,6 @@ export const LoginPage: React.FC = () => {
             <div>
               <div className="flex items-center gap-2">
                 <span className="font-black text-base tracking-wider text-slate-900">ESTATEPULSE</span>
-                <span className="text-[10px] px-2 py-0.5 rounded bg-brand-50 text-brand-800 font-extrabold border border-brand-200">
-                  CRM OS
-                </span>
               </div>
               <p className="text-[11px] text-slate-700 font-semibold">Real Estate Intelligence OS</p>
             </div>
